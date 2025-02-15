@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="game.css" />
+    <style></style>
+  </head>
+
+  <body>
+    <div id="topbar">
+      <div class="logo">
+        <img src="img/tank.webp" alt="minitank" width="40" height="40" />
+        <h1><span class="big-letter">M</span>INIMAX</h1>
+      </div>
+    </div>
+
+    <button id="btnCreate" class="btn">New Game</button>
+    <button id="btnJoin" class="btn">Join Game</button>
+    <label for="name" class="name"
+      >Name
+      <input id="name" type="text" />
+    </label>
+    <h2>Available games</h2>
+    <div id="divGames"></div>
+
+    <div id="divPlayers"></div>
+    <div id="divBoard"></div>
+    <div id="divPlay"></div>
+
+    <script type="text/javascript" src="js/display.js"></script>
+  </body>
+</html>

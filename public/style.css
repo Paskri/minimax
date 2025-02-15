@@ -1,0 +1,59 @@
+.name {
+  margin-left: 20px;
+}
+.available-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
+  border: 5px outset #665a42;
+  padding: 10px 20px;
+}
+
+.available-container .btn-container {
+  display: flex;
+  justify-content: space-around;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+.game-infos {
+  width: 600px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.players-controls {
+  display: flex;
+  align-items: center;
+}
+.players-container {
+  display: flex;
+  justify-content: space-between;
+  width: fit-content;
+}
+.players-controls .btn {
+  margin-right: 10px;
+}
+#divPlay {
+  display: flex;
+  justify-content: end;
+  width: 500px;
+  height: 50px;
+}
+.player {
+  width: 100px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  margin-right: 10px;
+}
+
+.pc-left,
+.pc-right {
+  width: 230px;
+}

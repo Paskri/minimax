@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Minimax - Play !</title>
+    <link rel="stylesheet" href="game.css" />
+    <link rel="stylesheet" href="transfer-modal.css" />
+    <style></style>
+  </head>
+
+  <body>
+    <div id="topbar">
+      <div class="logo">
+        <img src="img/tank.webp" alt="minitank" width="40" height="40" />
+        <h1><span class="big-letter">M</span>INIMAX</h1>
+      </div>
+      <div class="controls">
+        <div>Tour <span id="turn">1</span></div>
+        <div>Joueur <span id="turnPlayer">***</span></div>
+        <div><span id="countDown">00:00</span></div>
+        <button id="endturn" class="btn" style="height: 30px">
+          Fin du tour
+        </button>
+      </div>
+    </div>
+    <div id="wrapper">
+      <div class="canvas-container">
+        <img
+          id="background"
+          src="img/background.webp"
+          width="1000"
+          height="850"
+        />
+        <canvas id="chess" width="1000" height="850"></canvas>
+        <canvas id="grid" width="1000" height="850"></canvas>
+        <!--Unit modes - Off screen while not selected-->
+        <div id="mode-btn-container">
+          <button id="mode-btn">Mode 1</button>
+          <button id="mode-btn">Mode 2</button>
+        </div>
+      </div>
+      <div id="right-bar">
+        <div class="title-container">
+          <h3>Filtres</h3>
+        </div>
+        <div class="btn-container" style>
+          <button id="visible" class="btn">Survey</button>
+          <button id="ranges" class="btn">Ranges</button>
+          <button id="hit-points" class="btn">Hit points</button>
+          <button id="status" class="btn">Status</button>
+          <button id="team" class="btn">Team</button>
+          <button id="grid-numbers" class="btn">Grid nbs</button>
+        </div>
+        <div class="title-container">
+          <h3>Spécifications</h3>
+        </div>
+        <div id="specs">
+          <div>Player : <span id="player"></span> <span id="color"></span></div>
+          <div>UnitId : <span id="id"></span></div>
+          <div>Type : <span id="type"></span></div>
+          <div>Coords : <span id="coords"></span></div>
+          <div>Attack: <span id="attack"></span></div>
+          <div>Shots : <span id="shots"></span></div>
+          <div>Range: <span id="range"></span></div>
+          <div>Ammo: <span id="ammo"></span></div>
+          <div>Armor: <span id="armor"></span></div>
+          <div>Hit points: <span id="life"></span></div>
+          <div>Radar: <span id="radar"></span></div>
+          <div>Speed: <span id="speed"></span></div>
+          <div>Costs: <span id="cost"></span></div>
+          <div>Cargo: <span id="cargo"></span></div>
+        </div>
+        <div class="title-container">
+          <h3>Other datas</h3>
+        </div>
+        <div id="datas"></div>
+      </div>
+    </div>
+    <div id="units"></div>
+
+    <div style="display: none">
+      <img id="tank" src="img/tank.webp" width="34" height="34" />
+      <img id="scout" src="img/scout.webp" width="34" height="34" />
+      <img id="gun" src="img/gun.webp" width="34" height="34" />
+      <img id="artillery" src="img/artillery.webp" width="34" height="34" />
+      <img id="qg" src="img/qg.webp" width="34" height="34" />
+      <img id="repair" src="img/repair.webp" width="34" height="34" />
+      <img id="supply" src="img/supply.webp" width="34" height="34" />
+      <img id="fire" src="img/fire.webp" width="34" height="34" />
+      <img id="impact" src="img/impact.webp" width="34" height="34" />
+      <img id="bigimpact" src="img/impact.webp" width="75" height="75" />
+      <img id="debris" src="img/debris.webp" width="50" height="50" />
+    </div>
+    <div id="modal-background"></div>
+    <!--Transfer Modal window-->
+    <div id="transfer" class="modal">
+      <div class="transfer-left">
+        <img
+          id="transfer-left-img"
+          src="img/tank.webp"
+          width="34"
+          height="34"
+        />
+        <p>Cargo</p>
+        <p class="cargo-left">
+          <span class="cargo-left-current">50</span> /
+          <span class="cargo-left-max">50</span>
+        </p>
+      </div>
+      <div class="transfer-center">
+        <p>Transfer</p>
+        <div class="transfer-bar-container">
+          <div class="less btn">&laquo</div>
+          <div class="transfer-bar">
+            <div class="transfer-progress-bar"></div>
+          </div>
+          <div class="more btn">&raquo</div>
+        </div>
+
+        <div class="tranfer-arrows"></div>
+        <button id="execute-transfer" class="btn">Execute</button>
+      </div>
+      <div class="transfer-right">
+        <img
+          id="transfer-right-img"
+          src="img/tank.webp"
+          width="34"
+          height="34"
+        />
+        <p>Cargo</p>
+        <p class="cargo-right">
+          <span class="cargo-right-current">50</span> /
+          <span class="cargo-right-max">50</span>
+        </p>
+      </div>
+    </div>
+    <!--Produce Modal window-->
+    <div id="produce" class="modal">
+      <div class="produce-wrapper">
+        <div class="produce-left">
+          <div class="produce-left-up">
+            <div class="produce-img-container">
+              <img
+                id="produce-right-img"
+                src="img/tank.webp"
+                width="65"
+                height="65"
+              />
+            </div>
+            <div class="produce-text-container">
+              <h2>Unit Name</h2>
+              <p>
+                Description of the unit will come later. It will explain what
+                unit can do, what are his strengh and weakness. You willl know
+                too how to use it in the best way
+              </p>
+            </div>
+          </div>
+          <div class="produce-left-down">
+            <div class="produce-stats">
+              <div>Attack: <span id="attack"></span></div>
+              <div>Shots : <span id="shots"></span></div>
+              <div>Range: <span id="range"></span></div>
+              <div>Ammo: <span id="ammo"></span></div>
+              <div>Armor: <span id="armor"></span></div>
+              <div>Hit points: <span id="life"></span></div>
+              <div>Radar: <span id="radar"></span></div>
+              <div>Speed: <span id="speed"></span></div>
+              <div>Costs: <span id="cost"></span></div>
+              <div>Cargo: <span id="cargo"></span></div>
+            </div>
+            <div class="produce-middle-container">
+              <div class="current-build">
+                <h3>Current Production</h3>
+                <div class="cb-content">
+                  <div class="sc-header">
+                    <div class="c1">Unit</div>
+                    <div class="c2">Turns left</div>
+                    <div class="c3">Cost left</div>
+                  </div>
+                  <div class="cb-datas">
+                    <div class="c1">
+                      <div class="cb-img-container">
+                        <img
+                          class="cb-img"
+                          src="img/tank.webp"
+                          width="50px"
+                          height="50px"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="c2">8</div>
+                    <div class="c3">24</div>
+                  </div>
+                </div>
+              </div>
+              <div class="produce-speed-and-costs">
+                <div class="sc-header">
+                  <div class="c1"></div>
+                  <div class="c2">Turns</div>
+                  <div class="c3">Cost</div>
+                </div>
+                <div class="sc-line1">
+                  <div class="c1">
+                    <button class="speed-btn btn" data-value="0">
+                      Build x1
+                    </button>
+                  </div>
+                  <div class="c2">8</div>
+                  <div class="c3">24</div>
+                </div>
+                <div class="sc-line2">
+                  <div class="c1">
+                    <button class="speed-btn btn" data-value="1">
+                      Build x2
+                    </button>
+                  </div>
+                  <div class="c2">4</div>
+                  <div class="c3">48</div>
+                </div>
+                <div class="sc-line3">
+                  <div class="c1">
+                    <button class="speed-btn btn" data-value="2">
+                      Build x4
+                    </button>
+                  </div>
+                  <div class="c2">2</div>
+                  <div class="c3">72</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="produce-right">
+          <div class="unit-line">
+            <img class="unit-img" src="img/tank.webp" width="34" height="34" />
+            <span class="unit-name">Tank</span>
+            <span class="unit-cost">12</span>
+          </div>
+        </div>
+      </div>
+      <div class="execute-btn-container">
+        <button class="cancel-btn btn">Cancel</button>
+        <button class="build-btn btn">Build</button>
+        <button class="close-btn btn">Close</button>
+      </div>
+    </div>
+    <script type="module" src="/js/mainExp.js"></script>
+  </body>
+</html>

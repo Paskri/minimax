@@ -1,0 +1,19 @@
+{
+  "name": "minimax",
+  "version": "1.0.0",
+  "description": "Minigame inpired by chess and MAX Interplay's legacy game",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pascal Krieg",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "node": "^18.20.3",
+    "nodemon": "^3.1.0",
+    "prettier": "^3.5.0",
+    "websocket": "^1.0.35"
+  }
+}

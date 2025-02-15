@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=>, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      canvas {
+        border: 2px solid grey;
+      }
+
+      body {
+        margin: 10px;
+      }
+
+      #wrapper {
+        display: flex;
+        position: relative;
+      }
+
+      #controls {
+        margin-left: 15px;
+        display: flex;
+        justify-content: end;
+        width: 1000px;
+        align-items: center;
+      }
+
+      #endturn {
+        margin-left: 10px;
+      }
+
+      #turn {
+        margin-right: 10px;
+      }
+    </style>
+    <script src="js/classes.js"></script>
+    <script src="js/functions.js"></script>
+    <script src="js/datasExp.js"></script>
+  </head>
+
+  <body>
+    <div id="controls">
+      <div>Tour <span id="turn">1</span></div>
+      <div>Joueur <span id="turnPlayer">1</span></div>
+      <button id="endturn" class="btn" style="height: 30px">Fin du tour</button>
+    </div>
+    <div id="wrapper">
+      <div style="width: 1000px; height: 850px">
+        <canvas
+          id="chess"
+          width="1000"
+          height="850"
+          style="position: absolute; left: 10px; top: 10px; z-index: 0"
+        ></canvas>
+        <canvas
+          id="grid"
+          width="1000"
+          height="850"
+          style="position: absolute; left: 10px; top: 10px; z-index: 1"
+        ></canvas>
+      </div>
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: start;
+          justify-content: start;
+        "
+      >
+        <button id="visible" class="btn" style="margin: 20px; height: 30px">
+          Ressources
+        </button>
+        <div
+          id="specs"
+          style="
+            width: 200px;
+            height: 500px;
+            margin-left: 15px;
+            border: 1px solid;
+          "
+        >
+          <div>Specs</div>
+          <div>Player : <span id="player"></span> <span id="color"></span></div>
+          <div>UnitId : <span id="id"></span></div>
+          <div>Type : <span id="type"></span></div>
+          <div>Coords : <span id="coords"></span></div>
+          <div>Attaque: <span id="attack"></span></div>
+          <div>Tirs : <span id="shots"></span></div>
+          <div>Portée: <span id="range"></span></div>
+          <div>Munitions: <span id="ammo"></span></div>
+          <div>Blindage: <span id="armor"></span></div>
+          <div>Vie: <span id="life"></span></div>
+          <div>Radar: <span id="radar"></span></div>
+          <div>Vitesse: <span id="speed"></span></div>
+          <div>Coûts: <span id="costs"></span></div>
+        </div>
+      </div>
+    </div>
+    <div id="units"></div>
+
+    <div style="display: none">
+      <img id="tank" src="img/tank.webp" width="34" height="34" />
+      <img id="scout" src="img/scout.webp" width="34" height="34" />
+      <img id="gun" src="img/gun.webp" width="34" height="34" />
+      <img id="fire" src="img/fire.webp" width="34" height="34" />
+      <img id="impact" src="img/impact.webp" width="34" height="34" />
+      <img id="bigimpact" src="img/impact.webp" width="75" height="75" />
+      <img id="debris" src="img/debris.webp" width="50" height="50" />
+    </div>
+    <script>
+      const visibleBtn = document.querySelector('#visible');
+      let visible = false;
+      visibleBtn.addEventListener('click', (e) => {
+        visible = !visible;
+      });
+      const turnPlayer = document.querySelector('#turnPlayer');
+
+      const chess = document.querySelector('#chess');
+      const cctx = chess.getContext('2d');
+      const grid = document.querySelector('#grid');
+      const ctx = grid.getContext('2d');
+
+      let tank = document.querySelector('#tank');
+      let scout = document.querySelector('#scout');
+      let gun = document.querySelector('#gun');
+      let fire = document.querySelector('#fire');
+      let impact = document.querySelector('#impact');
+      let bigimpact = document.querySelector('#bigimpact');
+      let wreck = document.querySelector('#debris');
+
+      let unitsDisplay = document.querySelector('#units');
+      unitsDisplay.innerHTML = `<pre>${JSON.stringify(units, null, 2)}</pre>`;
+
+      //creating map
+      let map = [];
+      for (let i = 0; i < 20; i++) {
+        map[i] = [];
+        for (let j = 0; j < 17; j++) {
+          map[i][j] = [];
+        }
+      }
+
+      //creating debrisMap
+      //let debrisMap = []
+      //for (let i = 0; i < 20; i++) {
+      //  debrisMap[i] = []
+      //  for (let j = 0; j < 17; j++) {
+      //    debrisMap[i][j] = {}
+      //  }
+      //}
+      //DOM elements
+      let specs = document.querySelector('#specs');
+      let player = specs.querySelector('#player');
+      let id = document.querySelector('#id');
+      let color = specs.querySelector('#color');
+      let type = specs.querySelector('#type');
+      let coords = specs.querySelector('#coords');
+      let attack = specs.querySelector('#attack');
+      let shots = specs.querySelector('#shots');
+      let range = specs.querySelector('#range');
+      let ammo = specs.querySelector('#ammo');
+      let armor = specs.querySelector('#armor');
+      let life = specs.querySelector('#life');
+      let radar = specs.querySelector('#radar');
+      let speed = specs.querySelector('#speed');
+      let costs = specs.querySelector('#costs');
+
+      let endTurn = document.querySelector('#endturn');
+      let turnDisplay = document.querySelector('#turn');
+
+      let currentPlayer = 1;
+      endturn.addEventListener('click', (e) => {
+        //execution de tous les mouvement en attente
+        //passage au tour suivant
+        state.turn++;
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+
+        turnPlayer.innerHTML = currentPlayer;
+        turnDisplay.innerHTML = state.turn;
+        // réinitialisation tirs et vitesse (déplacement)
+        units.forEach((unit) => {
+          unit.currentSpecs.speed = unit.specs.speed;
+          unit.currentSpecs.shots = unit.specs.shots;
+        });
+        //si unité selectionnée - rafraichir les données
+        if (selectedUnit.length > 0) {
+          let uById = units[selectedUnit[0].id];
+          let specs = uById.specs;
+          shots.innerHTML = uById.currentSpecs.shots + '/' + specs.shots;
+          speed.innerHTML = uById.currentSpecs.speed + '/' + specs.speed;
+        }
+      });
+
+      let coveredCells = [];
+      let selectedUnit = [];
+
+      // ***************** TEST RADAR ************************
+      units.forEach((unit) => {});
+      console.log('CoveredCells : ', coveredCells);
+
+      //listener for selection & moves
+      grid.addEventListener('click', (e) => {
+        let calculatedRoute = [];
+        const rect = grid.getBoundingClientRect();
+        let selected = {
+          x: Math.floor((e.clientX - rect.left) / 50),
+          y: Math.floor((e.clientY - rect.top) / 50),
+        };
+        if (debrisMap[selected.x][selected.y]) {
+          //console.log('Débris: ', debrisMap[selected.x][selected.y])
+        }
+
+        //Si unité selectionné et clic sur case contenant une unité adverse, visible
+
+        // Visibilité radar
+        const visible =
+          coveredCells.find(
+            (cell) => cell.x === selected.x && cell.y === selected.y
+          ) !== undefined;
+        if (
+          selectedUnit.length > 0 &&
+          map[selected.x][selected.y].length > 0 &&
+          map[selected.x][selected.y][0].player !== selectedUnit[0].player &&
+          selectedUnit[0].currentSpecs.shots > 0 &&
+          visible
+        ) {
+          let sUnit = selectedUnit[0];
+          let target = map[selected.x][selected.y][0];
+          // checking if target in range
+          const dist = Math.sqrt(
+            Math.pow(target.x - sUnit.x, 2) + Math.pow(target.y - sUnit.y, 2)
+          );
+          console.log('Dist & Range : ', dist, sUnit.specs.range);
+          if (sUnit.specs.range >= dist) {
+            console.log('Is Enemy !!! FIRE ??');
+            //tir
+            units[sUnit.id].firing = true;
+            // mise à jour datas
+            units[target.id].onFire = true;
+            units[target.id].agrId = sUnit.id;
+            units[sUnit.id].targetX = selected.x;
+            units[sUnit.id].targetY = selected.y;
+            units[sUnit.id].targetId = target.id;
+            //console.log('datas : ', sUnit.id, units[map[selected.x][selected.y][0].id])
+            //définir angle de tir
+            let x = selected.x - units[sUnit.id].x;
+            let y = selected.y - units[sUnit.id].y;
+            let fireAngle = (Math.atan2(y, x) * (180 / Math.PI) + 90) % 360;
+            //console.log('fire angle : ', fireAngle)
+            units[sUnit.id].angle = fireAngle;
+          } else {
+            console.log('Not in range');
+          }
+
+          //si unité selectionné et click sur case vide ou sur débris
+        } else if (
+          selectedUnit[0] &&
+          selectedUnit[0].x != null &&
+          selectedUnit[0].y != null &&
+          (map[selected.x][selected.y].length === 0 ||
+            map[selected.x][selected.y][0].walkable === true)
+        ) {
+          // définir objectif et chemin proposé si chemin déjà selectionné
+          if (
+            selected.x === selectedUnit[0].objX &&
+            selected.y === selectedUnit[0].objY
+          ) {
+            selectedUnit[0].moving = true;
+            selectedUnit[0].animStep = 0;
+          } else {
+            selectedUnit[0].objX = selected.x;
+            selectedUnit[0].objY = selected.y;
+
+            // créer clone de carte pour recherche
+            const aStarGrid = [];
+            for (let i = 0; i < 20; i++) {
+              aStarGrid[i] = [];
+              for (let j = 0; j < 17; j++) {
+                let walkable = true;
+                if (map[i][j].length > 0 && map[i][j][0].walkable === false) {
+                  walkable = false;
+                }
+                aStarGrid[i][j] = new Node(i, j, walkable);
+              }
+            }
+            console.log('aStarGrid : ', aStarGrid);
+            console.log('Map', map);
+            //implémentation de A* - Calcul de la route optimale
+            const calculatedRoute = aStar(
+              aStarGrid[selectedUnit[0].x][selectedUnit[0].y],
+              aStarGrid[selected.x][selected.y],
+              aStarGrid
+            );
+            selectedUnit[0].route = calculatedRoute;
+          }
+        } else if (
+          selected.x != null &&
+          selected.y != null &&
+          map[selected.x][selected.y].length > 0
+        ) {
+          selectedUnit = map[selected.x][selected.y];
+          if (selectedUnit.length > 0) {
+            //console.log(selectedUnit)
+            //updating displayed infos
+            let uById = units[selectedUnit[0].id];
+            player.innerHTML = uById.player;
+            id.innerHTML = uById.id;
+            color.innerHTML = uById.color;
+            type.innerHTML = uById.type;
+            coords.innerHTML = uById.x + ' ' + uById.y;
+            let currentSpecs =
+              map[selectedUnit[0].x][selectedUnit[0].y][0].currentSpecs;
+            let specs = map[selectedUnit[0].x][selectedUnit[0].y][2];
+            attack.innerHTML = specs.attack;
+            shots.innerHTML = uById.currentSpecs.shots + '/' + specs.shots;
+            range.innerHTML = specs.range;
+            ammo.innerHTML = uById.currentSpecs.ammo + '/' + specs.ammo;
+            armor.innerHTML = specs.armor;
+            life.innerHTML = uById.currentSpecs.life + '/' + specs.life;
+            radar.innerHTML = specs.radar;
+            speed.innerHTML = uById.currentSpecs.speed + '/' + specs.speed;
+            costs.innerHTML = specs.cost;
+          }
+        }
+      });
+
+      grid.addEventListener('contextmenu', (event) => {
+        event.preventDefault(); // Empêche le menu contextuel par défaut
+        const rect = grid.getBoundingClientRect();
+        const xClick = event.clientX - rect.left;
+        const yClick = event.clientY - rect.top;
+        // console.log(`Clic droit aux coordonnées : (${xClick}, ${yClick})`);
+        // si sur unitée selectionné, ouvrir menu contextuel personnalisé
+        // sinon déselectionner
+        if (
+          selectedUnit.length > 0 &&
+          selectedUnit[0].x === xClick &&
+          selectedUnit[0].y === yClick
+        ) {
+        } else {
+          let specs = document.querySelector('#specs');
+          let id = document.querySelector('#id');
+          let player = specs.querySelector('#player');
+          let color = specs.querySelector('#color');
+          let type = specs.querySelector('#type');
+          let coords = specs.querySelector('#coords');
+          let attack = specs.querySelector('#attack');
+          let shots = specs.querySelector('#shots');
+          let range = specs.querySelector('#range');
+          let ammo = specs.querySelector('#ammo');
+          let armor = specs.querySelector('#armor');
+          let life = specs.querySelector('#life');
+          let radar = specs.querySelector('#radar');
+          let speed = specs.querySelector('#speed');
+          let costs = specs.querySelector('#costs');
+          player.innerHTML = '';
+          id.innerHTML = '';
+          color.innerHTML = '';
+          type.innerHTML = '';
+          coords.innerHTML = '';
+          attack.innerHTML = '';
+          shots.innerHTML = '';
+          range.innerHTML = '';
+          ammo.innerHTML = '';
+          armor.innerHTML = '';
+          life.innerHTML = '';
+          radar.innerHTML = '';
+          speed.innerHTML = '';
+          costs.innerHTML = '';
+          selectedUnit = [];
+        }
+        selectedUnit = [];
+      });
+
+      grid.addEventListener('mousemove', (event) => {
+        if (selectedUnit.length > 0) {
+          const rect = grid.getBoundingClientRect();
+          const cellX = Math.floor((event.clientX - rect.left) / 50);
+          const cellY = Math.floor((event.clientY - rect.top) / 50);
+
+          const isTargetCell = units.some(
+            (unit) =>
+              unit.x === cellX &&
+              unit.y === cellY &&
+              unit.player !== selectedUnit[0].player
+          );
+          //check si à portée de tir
+          const dist = Math.sqrt(
+            Math.pow(selectedUnit[0].x - cellX, 2) +
+              Math.pow(selectedUnit[0].y - cellY, 2)
+          );
+          if (isTargetCell && dist <= selectedUnit[2].range) {
+            grid.style.cursor = 'crosshair';
+          } else {
+            grid.style.cursor = 'default';
+          }
+        }
+      });
+
+      /************************************   DRAW   ************************************/
+      function draw() {
+        cctx.clearRect(0, 0, chess.width, chess.height);
+        ctx.clearRect(0, 0, grid.width, grid.height);
+        //chess lines
+        for (let i = 0; i < 21; i++) {
+          ctx.beginPath();
+          ctx.strokeStyle = 'grey';
+          ctx.lineWidth = 1;
+          ctx.moveTo(i * 50, 0);
+          ctx.lineTo(i * 50, 850);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(0, i * 50);
+          ctx.lineTo(1000, i * 50);
+          ctx.stroke();
+        }
+        //drawing debris
+        //debris.forEach((d) => {
+        //  cctx.drawImage(wreck, d.x * 50, d.y * 50, 50, 50);
+        //});
+        // ************** Radar ****************
+        // Creating an array with all cells covered by current player radarS
+        coveredCells = [];
+        units.forEach((unit) => {
+          if (unit.player === currentPlayer) {
+            const radarRange = unit.specs.radar * 50;
+            const cellSize = 50;
+            const mapWidth = 20;
+            const mapHeight = 17;
+            let centerX = unit.x * cellSize + cellSize / 2;
+            let centerY = unit.y * cellSize + cellSize / 2;
+
+            // Calculer les bornes du carré englobant le cercle de portée
+            let minX = Math.max(
+              0,
+              Math.floor((centerX - radarRange) / cellSize)
+            );
+            let maxX = Math.min(
+              mapWidth - 1,
+              Math.ceil((centerX + radarRange) / cellSize)
+            );
+            let minY = Math.max(
+              0,
+              Math.floor((centerY - radarRange) / cellSize)
+            );
+            let maxY = Math.min(
+              mapHeight - 1,
+              Math.ceil((centerY + radarRange) / cellSize)
+            );
+            // Parcourir uniquement les cases dans le carré englobant
+            for (let y = minY; y <= maxY; y++) {
+              for (let x = minX; x <= maxX; x++) {
+                // Calculer les coordonnées du centre de la case actuelle
+                let cellCenterX = x * cellSize + cellSize / 2;
+                let cellCenterY = y * cellSize + cellSize / 2;
+
+                // Calculer la distance entre le centre de la case et le centre de l'unité
+                let distance = Math.sqrt(
+                  (cellCenterX - centerX) ** 2 + (cellCenterY - centerY) ** 2
+                );
+
+                // vérifier si la cellule est déjà présente dans coveredCells
+                const alreadyIn =
+                  coveredCells.find((cell) => cell.x === x && cell.y === y) !==
+                  undefined;
+                // Vérifier si la distance est inférieure ou égale au rayon de la portée
+                if (distance <= radarRange && !alreadyIn) {
+                  // Ajouter les coordonnées de la case au tableau
+                  coveredCells.push({ x: x, y: y });
+                }
+              }
+            }
+          }
+        });
+
+        //drawing units
+        units.forEach((unit) => {
+          if (unit.type === 'tank') {
+            ctx.beginPath();
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(unit.x * 50 + 8, unit.y * 50 + 8, 34, 34);
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 8, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 8, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 42, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 42, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 25, unit.y * 50 + 5);
+            ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 22);
+            ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 5);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = unit.color;
+            ctx.fillRect(unit.x * 50 + 10, unit.y * 50 + 9, 4, 4);
+            ctx.fillRect(unit.x * 50 + 36, unit.y * 50 + 37, 4, 4);
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.arc(unit.x * 50 + 25, unit.y * 50 + 25, 9, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          if (unit.type === 'supply') {
+            ctx.beginPath();
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(unit.x * 50 + 12, unit.y * 50 + 8, 26, 34);
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 11, unit.y * 50 + 10);
+            ctx.lineTo(unit.x * 50 + 11, unit.y * 50 + 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 11, unit.y * 50 + 30);
+            ctx.lineTo(unit.x * 50 + 11, unit.y * 50 + 40);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 39, unit.y * 50 + 10);
+            ctx.lineTo(unit.x * 50 + 39, unit.y * 50 + 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 39, unit.y * 50 + 30);
+            ctx.lineTo(unit.x * 50 + 39, unit.y * 50 + 40);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 13, unit.y * 50 + 18);
+            ctx.lineTo(unit.x * 50 + 37, unit.y * 50 + 18);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 15, unit.y * 50 + 22);
+            ctx.lineTo(unit.x * 50 + 35, unit.y * 50 + 22);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 15, unit.y * 50 + 26);
+            ctx.lineTo(unit.x * 50 + 35, unit.y * 50 + 26);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 15, unit.y * 50 + 30);
+            ctx.lineTo(unit.x * 50 + 35, unit.y * 50 + 30);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 15, unit.y * 50 + 34);
+            ctx.lineTo(unit.x * 50 + 35, unit.y * 50 + 34);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 15, unit.y * 50 + 38);
+            ctx.lineTo(unit.x * 50 + 30, unit.y * 50 + 38);
+            ctx.stroke();
+            //ctx.beginPath();
+            //ctx.moveTo(unit.x * 50 + 42, unit.y * 50 + 8);
+            //ctx.lineTo(unit.x * 50 + 42, unit.y * 50 + 42);
+            //ctx.stroke();
+            //ctx.beginPath();
+            //ctx.moveTo(unit.x * 50 + 25, unit.y * 50 + 5);
+            //ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 22);
+            //ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 5);
+            //ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = unit.color;
+            ctx.fillRect(unit.x * 50 + 14, unit.y * 50 + 9, 4, 4);
+            ctx.fillRect(unit.x * 50 + 32, unit.y * 50 + 37, 4, 4);
+            ctx.beginPath();
+            //ctx.fillStyle = 'white'
+            //ctx.arc(unit.x * 50 + 25, unit.y * 50 + 25, 9, 0, Math.PI * 2)
+            //ctx.stroke();
+          }
+          if (unit.type === 'repair') {
+            //ctx.beginPath();
+            ctx.strokeStyle = 'black';
+            //ctx.strokeRect(unit.x * 50 + 8, unit.y * 50 + 8, 34, 34)
+            ctx.beginPath();
+            ctx.strokeStyle = 'black';
+            ctx.moveTo(unit.x * 50 + 8, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 8, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 42, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 42, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 8, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 8, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 42, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 42, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 14, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 14, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 36, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 36, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 8, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 14, unit.y * 50 + 8);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 36, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 42, unit.y * 50 + 8);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 8, unit.y * 50 + 42);
+            ctx.lineTo(unit.x * 50 + 14, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 36, unit.y * 50 + 42);
+            ctx.lineTo(unit.x * 50 + 42, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 13, unit.y * 50 + 28);
+            ctx.lineTo(unit.x * 50 + 37, unit.y * 50 + 28);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 13, unit.y * 50 + 22);
+            ctx.lineTo(unit.x * 50 + 37, unit.y * 50 + 22);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 17, unit.y * 50 + 25);
+            ctx.lineTo(unit.x * 50 + 33, unit.y * 50 + 25);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 13, unit.y * 50 + 28);
+            ctx.lineTo(unit.x * 50 + 13, unit.y * 50 + 22);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 37, unit.y * 50 + 28);
+            ctx.lineTo(unit.x * 50 + 37, unit.y * 50 + 22);
+            ctx.stroke();
+            //ctx.beginPath();
+            //ctx.moveTo(unit.x * 50 + 25, unit.y * 50 + 5);
+            //ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 22);
+            //ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 5);
+            //ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = unit.color;
+            ctx.fillRect(unit.x * 50 + 9, unit.y * 50 + 9, 4, 4);
+            ctx.fillRect(unit.x * 50 + 37, unit.y * 50 + 37, 4, 4);
+            //ctx.beginPath();
+            //ctx.fillStyle = 'white'
+            //ctx.arc(unit.x * 50 + 25, unit.y * 50 + 25, 9, 0, Math.PI * 2)
+            //ctx.stroke();
+          }
+
+          if (unit.type === 'artillery') {
+            ctx.beginPath();
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(unit.x * 50 + 12, unit.y * 50 + 8, 26, 34);
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 11, unit.y * 50 + 10);
+            ctx.lineTo(unit.x * 50 + 11, unit.y * 50 + 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 11, unit.y * 50 + 30);
+            ctx.lineTo(unit.x * 50 + 11, unit.y * 50 + 40);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 39, unit.y * 50 + 10);
+            ctx.lineTo(unit.x * 50 + 39, unit.y * 50 + 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 39, unit.y * 50 + 30);
+            ctx.lineTo(unit.x * 50 + 39, unit.y * 50 + 40);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 13, unit.y * 50 + 28);
+            ctx.lineTo(unit.x * 50 + 37, unit.y * 50 + 28);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 24, unit.y * 50 + 5);
+            ctx.lineTo(unit.x * 50 + 24, unit.y * 50 + 37);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 24, unit.y * 50 + 5);
+            ctx.lineTo(unit.x * 50 + 24, unit.y * 50 + 37);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 26, unit.y * 50 + 5);
+            ctx.lineTo(unit.x * 50 + 26, unit.y * 50 + 37);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 26, unit.y * 50 + 5);
+            ctx.lineTo(unit.x * 50 + 26, unit.y * 50 + 37);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 20, unit.y * 50 + 30);
+            ctx.lineTo(unit.x * 50 + 20, unit.y * 50 + 40);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 30, unit.y * 50 + 30);
+            ctx.lineTo(unit.x * 50 + 30, unit.y * 50 + 40);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 20, unit.y * 50 + 30);
+            ctx.lineTo(unit.x * 50 + 30, unit.y * 50 + 30);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 20, unit.y * 50 + 40);
+            ctx.lineTo(unit.x * 50 + 30, unit.y * 50 + 40);
+            ctx.stroke();
+            //ctx.beginPath();
+            //ctx.moveTo(unit.x * 50 + 42, unit.y * 50 + 8);
+            //ctx.lineTo(unit.x * 50 + 42, unit.y * 50 + 42);
+            //ctx.stroke();
+            //ctx.beginPath();
+            //ctx.moveTo(unit.x * 50 + 25, unit.y * 50 + 5);
+            //ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 22);
+            //ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 5);
+            //ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = unit.color;
+            ctx.fillRect(unit.x * 50 + 14, unit.y * 50 + 9, 4, 4);
+            ctx.fillRect(unit.x * 50 + 32, unit.y * 50 + 37, 4, 4);
+            ctx.beginPath();
+            //ctx.fillStyle = 'white'
+            //ctx.arc(unit.x * 50 + 25, unit.y * 50 + 25, 9, 0, Math.PI * 2)
+            //ctx.stroke();
+          }
+
+          if (unit.type === 'qg') {
+            console.log('qg');
+            ctx.beginPath();
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(unit.x * 50 + 8, unit.y * 50 + 8, 34, 34);
+            ctx.beginPath();
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(unit.x * 50 + 14, unit.y * 50 + 14, 22, 22);
+            //ctx.beginPath();
+            //ctx.moveTo(unit.x * 50 + 8, unit.y * 50 + 8);
+            //ctx.lineTo(unit.x * 50 + 8, unit.y * 50 + 42);
+            //ctx.stroke();
+            //chenilles
+            //ctx.beginPath();
+            //ctx.moveTo(unit.x * 50 + 42, unit.y * 50 + 8);
+            //ctx.lineTo(unit.x * 50 + 42, unit.y * 50 + 42);
+            //ctx.stroke();
+            //canon
+            //ctx.beginPath();
+            //ctx.moveTo(unit.x * 50 + 25, unit.y * 50 + 5);
+            //ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 22);
+            //ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 5);
+            //ctx.stroke();
+            // team colors
+            ctx.beginPath();
+            ctx.fillStyle = unit.color;
+            ctx.fillRect(unit.x * 50 + 10, unit.y * 50 + 9, 4, 4);
+            ctx.fillRect(unit.x * 50 + 36, unit.y * 50 + 37, 4, 4);
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.arc(unit.x * 50 + 21, unit.y * 50 + 29, 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.arc(unit.x * 50 + 21, unit.y * 50 + 29, 1, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.arc(unit.x * 50 + 23, unit.y * 50 + 19, 1, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.arc(unit.x * 50 + 30, unit.y * 50 + 25, 1, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.arc(unit.x * 50 + 32, unit.y * 50 + 18, 2, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          if (unit.type === 'scout') {
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 25, unit.y * 50 + 8);
+            ctx.lineTo(unit.x * 50 + 20, unit.y * 50 + 38);
+            ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 42);
+            ctx.lineTo(unit.x * 50 + 30, unit.y * 50 + 38);
+            ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 8);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 25, unit.y * 50 + 32);
+            ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 22);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = unit.color;
+            //ctx.fillRect(unit.x * 50 + 10, unit.y * 50 + 9, 4, 4)
+            ctx.fillRect(unit.x * 50 + 23, unit.y * 50 + 36, 4, 4);
+            ctx.beginPath();
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.arc(unit.x * 50 + 25, unit.y * 50 + 32, 3, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          if (unit.type === 'gun') {
+            //ctx.beginPath();
+            //ctx.strokeStyle = 'black'
+            //ctx.strokeRect(unit.x * 50 + 8, unit.y * 50 + 8, 34, 34)
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 8, unit.y * 50 + 25);
+            ctx.lineTo(unit.x * 50 + 8, unit.y * 50 + 36);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 8, unit.y * 50 + 36);
+            ctx.lineTo(unit.x * 50 + 12, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 12, unit.y * 50 + 42);
+            ctx.lineTo(unit.x * 50 + 38, unit.y * 50 + 42);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 42, unit.y * 50 + 25);
+            ctx.lineTo(unit.x * 50 + 42, unit.y * 50 + 36);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 42, unit.y * 50 + 36);
+            ctx.lineTo(unit.x * 50 + 38, unit.y * 50 + 42);
+            ctx.stroke();
+            ctx.beginPath();
+
+            ctx.moveTo(unit.x * 50 + 8, unit.y * 50 + 25);
+            ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 10);
+            ctx.stroke();
+
+            ctx.moveTo(unit.x * 50 + 42, unit.y * 50 + 25);
+            ctx.lineTo(unit.x * 50 + 25, unit.y * 50 + 10);
+            ctx.stroke();
+
+            //Canons
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 17, unit.y * 50 + 10);
+            ctx.lineTo(unit.x * 50 + 17, unit.y * 50 + 28);
+            ctx.lineTo(unit.x * 50 + 17, unit.y * 50 + 10);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 33, unit.y * 50 + 10);
+            ctx.lineTo(unit.x * 50 + 33, unit.y * 50 + 28);
+            ctx.lineTo(unit.x * 50 + 33, unit.y * 50 + 10);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 21, unit.y * 50 + 7);
+            ctx.lineTo(unit.x * 50 + 21, unit.y * 50 + 30);
+            ctx.lineTo(unit.x * 50 + 21, unit.y * 50 + 7);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(unit.x * 50 + 29, unit.y * 50 + 7);
+            ctx.lineTo(unit.x * 50 + 29, unit.y * 50 + 30);
+            ctx.lineTo(unit.x * 50 + 29, unit.y * 50 + 7);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = unit.color;
+            ctx.fillRect(unit.x * 50 + 10, unit.y * 50 + 24, 4, 4);
+            ctx.fillRect(unit.x * 50 + 36, unit.y * 50 + 35, 4, 4);
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.arc(unit.x * 50 + 25, unit.y * 50 + 28, 8, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        });
+
+        //selected Unit range circles
+        if (selectedUnit.length > 1) {
+          if (units[selectedUnit[0].id].moving === false) {
+            ctx.beginPath();
+            ctx.strokeStyle = 'green';
+            ctx.strokeRect(
+              selectedUnit[0].x * 50 + 2,
+              selectedUnit[0].y * 50 + 2,
+              46,
+              46
+            );
+            ctx.stroke;
+            //adding speed circle
+            ctx.beginPath();
+            ctx.arc(
+              selectedUnit[0].x * 50 + 25,
+              selectedUnit[0].y * 50 + 25,
+              selectedUnit[1].speed * 50,
+              0,
+              Math.PI * 2
+            );
+            ctx.stroke();
+            //adding radar circle
+            ctx.beginPath();
+            ctx.strokeStyle = 'gold';
+            ctx.arc(
+              selectedUnit[0].x * 50 + 25,
+              selectedUnit[0].y * 50 + 25,
+              selectedUnit[1].radar * 50,
+              0,
+              Math.PI * 2
+            );
+            ctx.stroke();
+            //adding range circle
+            ctx.beginPath();
+            ctx.strokeStyle = 'red';
+            ctx.arc(
+              selectedUnit[0].x * 50 + 25,
+              selectedUnit[0].y * 50 + 25,
+              selectedUnit[1].range * 50,
+              0,
+              Math.PI * 2
+            );
+            ctx.stroke();
+          }
+          //Route drawing while unit selected and objective square selected
+          if (selectedUnit[0].route.length > 0) {
+            let move = 0;
+            let step = 0;
+            let previousStep = 1;
+            selectedUnit[0].route.forEach((coords) => {
+              let max = selectedUnit[1].speed;
+              let cost =
+                selectedUnit[0].x !== selectedUnit[0].route[0].x &&
+                selectedUnit[0].y !== selectedUnit[0].route[0].y
+                  ? 1.4
+                  : 1;
+              move += cost;
+
+              step = Math.floor(move / max) + 1;
+              let stepColor = 'orange';
+              if (step !== previousStep) {
+                previousStep = step;
+                stepColor = 'red';
+              }
+              ctx.beginPath();
+              ctx.strokeStyle = stepColor;
+              ctx.arc(
+                coords.x * 50 + 25,
+                coords.y * 50 + 25,
+                2,
+                0,
+                Math.PI * 2
+              );
+              ctx.stroke();
+              ctx.fontStyle = 'black';
+              ctx.font = '10px Arial';
+              ctx.fillText(
+                `${parseFloat(move.toFixed(2))} - ${step}`,
+                coords.x * 50 + 10,
+                coords.y * 50 + 25
+              );
+            });
+          }
+
+          //updating units displayed datas
+          unitsDisplay.innerHTML = `<pre>${JSON.stringify(
+            units,
+            null,
+            2
+          )}</pre>`;
+        }
+
+        //drawing ressources
+        minesGroups.forEach((mines) => {
+          if (visible) {
+            for (let mine in mines) {
+              let color = mines[mine][0];
+              let value = mines[mine][3];
+              let i = mines[mine][1];
+              let j = mines[mine][2];
+
+              ctx.beginPath();
+              ctx.strokeStyle = color;
+              ctx.lineWidth = 3;
+              ctx.arc(i * 50 + 25, j * 50 + 25, 20, 0, Math.PI * 2); //x,y,d,pi
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.font = '20px Arial';
+              ctx.textAlign = 'center';
+              ctx.fillStyle = color;
+              ctx.fillText(value, i * 50 + 25, j * 50 + 32);
+            }
+          }
+        });
+      }
+
+      function loadImages(images, callback) {
+        let loadedImages = 0;
+        let numImages = images.length;
+
+        images.forEach((image) => {
+          image.onload = () => {
+            loadedImages++;
+            if (loadedImages === numImages) {
+              callback();
+            }
+          };
+        });
+      }
+      setInterval(draw, 40);
+      //loadImages([tank, scout, gun], draw);
+    </script>
+  </body>
+</html>
