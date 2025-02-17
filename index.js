@@ -696,6 +696,31 @@ wsServer.on("request", request => {
                 });
             }
 
+            // toggle Sentry mode
+            if (result.method === 'toggleSentry') {
+                const unitId = result.unitId
+                const gameId = result.gameId
+                const game = games[gameId]
+                const units = game.units
+                const unit = units[unitId]
+
+                if (unit.activeModes.includes('sentry')) {
+                    const index = unit.activeModes.indexOf('sentry')
+                    unit.activeModes.splice(index, 1)
+                } else {
+                    unit.activeModes.push('sentry')
+                }
+                const payLoad = {
+                    "method": "updateGame",
+                    "from": result.method,
+                    "game": game
+                }
+                game.clients.forEach(c => {
+                    clients[c.clientId].connection.send(JSON.stringify(payLoad))
+                });
+
+            }
+
             // repairing unit
             if (result.method === 'repairUnit') {
                 const gameId = result.gameId;

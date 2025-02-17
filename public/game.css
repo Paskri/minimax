@@ -280,6 +280,7 @@ h1 {
   background-color: #665a42;
   padding: 5px 10px;
   border-radius: 15px;
+  cursor: pointer;
 }
 
 #mode-btn.active {

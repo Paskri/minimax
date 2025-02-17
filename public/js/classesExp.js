@@ -63,7 +63,7 @@ export class Tank extends CommonSpecs {
     this.angle = angle;
     this.canFire = true;
     this.canSentry = true;
-    this.modes = ['fire', 'sentry']
+    this.modes = ['move', 'fire', 'sentry']
     this.activeModes = ['sentry']
 
     this.currentSpecs = {

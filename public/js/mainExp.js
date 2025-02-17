@@ -721,7 +721,13 @@ grid.addEventListener('contextmenu', (event) => {
                 } else if (mode === 'fire') {
                     //toggle
                 } else if (mode === 'sentry') {
-                    //toggle
+                    const payLoad = {
+                        method: 'toggleSentry',
+                        unitId: selectedUnit.id,
+                        gameId: game.id,
+                    };
+                    console.log('Sending : ', payLoad);
+                    ws.send(JSON.stringify(payLoad));
                 } else if (mode === 'produce') {
                     //openning production modal
                     openProduceModal(selectedUnit, images, game.id, ws);
@@ -945,44 +951,44 @@ grid.addEventListener('mousemove', (event) => {
 function draw() {
     //Dev data display
     //updating selectedUnit displayed datas
-    //const dataContainer = document.querySelector('#datas');
-    //if (selectedUnit && Object.keys(selectedUnit).length > 0) {
-    //    //updating displayed infos
-    //    let uById = units[selectedUnit.id];
-    //    if (uById && Object.values(uById).length > 0)
-    //        for (const element in domElements) {
-    //            //console.log('For: ', element, domElements[element])
-    //            const de = domElements[element];
-    //            if (['player', 'id', 'color', 'type'].includes(element)) {
-    //                de.innerHTML = uById[element];
-    //            } else if (element === 'coords') {
-    //                de.innerHTML = uById.x + ' ' + uById.y;
-    //            } else if (
-    //                ['attack', 'range', 'armor', 'radar', 'cost'].includes(element)
-    //            ) {
-    //                de.innerHTML = uById.specs[element];
-    //            } else if (element === 'cargo') {
-    //                de.innerHTML = uById.canCargo
-    //                    ? uById.currentSpecs[element] + '/' + uById.specs[element]
-    //                    : 'Not capable';
-    //            } else {
-    //                de.innerHTML = uById.currentSpecs[element] + '/' + uById.specs[element];
-    //            }
-    //        }
-    //
-    //Other datas displaying
-    //dataContainer.innerHTML = '';
-    //Object.keys(selectedUnit).forEach((key) => {
-    //    const div = document.createElement('div');
-    //    div.innerHTML = `${key} : ${selectedUnit[key]}`;
-    //    dataContainer.appendChild(div);
-    //});
-    //} else {
-    //    for (const element in domElements) {
-    //        domElements[element].innerHTML = ' -- ';
-    //    }
-    //    dataContainer.innerHTML = 'Empty ! select a unit !!';
-    //}
+    const dataContainer = document.querySelector('#datas');
+    if (selectedUnit && Object.keys(selectedUnit).length > 0) {
+        //updating displayed infos
+        let uById = units[selectedUnit.id];
+        if (uById && Object.values(uById).length > 0)
+            for (const element in domElements) {
+                //console.log('For: ', element, domElements[element])
+                const de = domElements[element];
+                if (['player', 'id', 'color', 'type'].includes(element)) {
+                    de.innerHTML = uById[element];
+                } else if (element === 'coords') {
+                    de.innerHTML = uById.x + ' ' + uById.y;
+                } else if (
+                    ['attack', 'range', 'armor', 'radar', 'cost'].includes(element)
+                ) {
+                    de.innerHTML = uById.specs[element];
+                } else if (element === 'cargo') {
+                    de.innerHTML = uById.canCargo
+                        ? uById.currentSpecs[element] + '/' + uById.specs[element]
+                        : 'Not capable';
+                } else {
+                    de.innerHTML = uById.currentSpecs[element] + '/' + uById.specs[element];
+                }
+            }
+
+        //Other datas displaying
+        dataContainer.innerHTML = '';
+        Object.keys(selectedUnit).forEach((key) => {
+            const div = document.createElement('div');
+            div.innerHTML = `${key} : ${selectedUnit[key]}`;
+            dataContainer.appendChild(div);
+        });
+    } else {
+        for (const element in domElements) {
+            domElements[element].innerHTML = ' -- ';
+        }
+        dataContainer.innerHTML = 'Empty ! select a unit !!';
+    }
 
     //victory conditions
     //const filteredPlayer1 = units.filter((unit) => unit.player === 1)
@@ -1444,7 +1450,7 @@ function draw() {
                     );
                     const eVisible =
                         eCoveredCells.find(
-                            (cell) => cell.x === unit.x && cell.y === unit.y,
+                            (cell) => cell.x === unit.x && cell.y === unit.y
                         ) !== undefined;
 
                     if (isRanged !== -1 && unit.player === currentPlayer && eVisible) {
@@ -1452,10 +1458,12 @@ function draw() {
                             (id) => {
                                 return (
                                     units[id].currentSpecs.ammo > 0 &&
-                                    units[id].currentSpecs.shots > 0
+                                    units[id].currentSpecs.shots > 0 &&
+                                    units[id].activeModes.includes('sentry')
                                 );
                             },
                         );
+                        console.log('cleanedRangedCells', cleanedRangedCells)
                         if (cleanedRangedCells.length > 0) {
                             unit.onAutoFire = true;
                             const payLoad = {
@@ -1551,7 +1559,8 @@ function draw() {
                                 (id) => {
                                     return (
                                         units[id].currentSpecs.ammo > 0 &&
-                                        units[id].currentSpecs.shots > 0
+                                        units[id].currentSpecs.shots > 0 &&
+                                        units[id].activeModes.includes('sentry')
                                     );
                                 },
                             );
