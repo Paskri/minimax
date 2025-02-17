@@ -21,7 +21,11 @@ export function openTransferModal(unitA, imgA, unitB, imgB, game, ws) {
   let cargoA = unitA.currentSpecs.cargo
   let cargoB = unitB.currentSpecs.cargo
 
+  const maxCargoA = unitA.specs.cargo
+  const maxCargoB = unitB.specs.cargo
+
   const maxCargo = cargoA + cargoB
+
   console.log('cargoA: ', cargoA, ' cargoB: ', cargoB, ' maxCargo: ', maxCargo)
   const transferBar = transferContainer.querySelector('.transfer-bar')
   const progressBar = transferContainer.querySelector('.transfer-progress-bar')
@@ -39,20 +43,43 @@ export function openTransferModal(unitA, imgA, unitB, imgB, game, ws) {
   progressBar.style.width = `${newPercent}%`
 
   const updateValuesOnBar = (e) => {
-    const rect = transferBar.getBoundingClientRect()
-    let clicked = Math.max(0, Math.min(e.clientX - rect.left, rect.width))
-    percent = (clicked / rect.width) * 100
-    newPercent = percent - percent % step
-    transfered = Math.floor(newPercent / step) - cargoB
-    updateProgressBar()
-  }
+    const rect = transferBar.getBoundingClientRect();
+    let clicked = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+
+    percent = (clicked / rect.width) * 100;
+    let tempNewPercent = percent - (percent % step);
+    let tempTransfered = Math.floor(tempNewPercent / step) - cargoB;
+
+    if (
+      (tempTransfered > 0 && tempTransfered + cargoB <= maxCargoB) ||
+      (tempTransfered <= 0 && -tempTransfered + cargoA <= maxCargoA)
+    ) {
+      newPercent = tempNewPercent;
+      transfered = tempTransfered;
+    }
+
+    updateProgressBar();
+  };
 
   const handleLessOrMore = (e, number) => {
-    if (newPercent + (step * number) >= 0 &&
-      newPercent + (step * number) <= 100) {
-      newPercent += step * number
-      transfered += number
-      updateProgressBar()
+    if (number > 0) {
+      if (!(transfered + number + cargoB > maxCargoB)) {
+        if (newPercent + (step * number) >= 0 &&
+          newPercent + (step * number) <= 100) {
+          newPercent += step * number
+          transfered += number
+          updateProgressBar()
+        }
+      }
+    } else if (number < 0) {
+      if (!((transfered + number) * -1 + cargoA > maxCargoA)) {
+        if (newPercent + (step * number) >= 0 &&
+          newPercent + (step * number) <= 100) {
+          newPercent += step * number
+          transfered += number
+          updateProgressBar()
+        }
+      }
     }
   }
 

@@ -61,6 +61,7 @@
   height: 22px;
   border: 5px inset #665a42;
   margin-top: 1px;
+  user-select: none;
 }
 .transfer-progress-bar {
   position: absolute;

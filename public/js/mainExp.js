@@ -943,46 +943,46 @@ grid.addEventListener('mousemove', (event) => {
 
 /*******************************   DRAW   *******************************/
 function draw() {
+    //Dev data display
     //updating selectedUnit displayed datas
-    const dataContainer = document.querySelector('#datas');
-    if (selectedUnit && Object.keys(selectedUnit).length > 0) {
-        //updating displayed infos
-        let uById = units[selectedUnit.id];
-        if (uById && Object.values(uById).length > 0)
-            for (const element in domElements) {
-                //console.log('For: ', element, domElements[element])
-                const de = domElements[element];
-                if (['player', 'id', 'color', 'type'].includes(element)) {
-                    de.innerHTML = uById[element];
-                } else if (element === 'coords') {
-                    de.innerHTML = uById.x + ' ' + uById.y;
-                } else if (
-                    ['attack', 'range', 'armor', 'radar', 'cost'].includes(element)
-                ) {
-                    de.innerHTML = uById.specs[element];
-                } else if (element === 'cargo') {
-                    de.innerHTML = uById.canCargo
-                        ? uById.currentSpecs[element] + '/' + uById.specs[element]
-                        : 'Not capable';
-                } else {
-                    de.innerHTML = uById.currentSpecs[element] + '/' + uById.specs[element];
-                }
-            }
-
-        //datas
-        dataContainer.innerHTML = '';
-
-        Object.keys(selectedUnit).forEach((key) => {
-            const div = document.createElement('div');
-            div.innerHTML = `${key} : ${selectedUnit[key]}`;
-            dataContainer.appendChild(div);
-        });
-    } else {
-        for (const element in domElements) {
-            domElements[element].innerHTML = ' -- ';
-        }
-        dataContainer.innerHTML = 'Empty ! select a unit !!';
-    }
+    //const dataContainer = document.querySelector('#datas');
+    //if (selectedUnit && Object.keys(selectedUnit).length > 0) {
+    //    //updating displayed infos
+    //    let uById = units[selectedUnit.id];
+    //    if (uById && Object.values(uById).length > 0)
+    //        for (const element in domElements) {
+    //            //console.log('For: ', element, domElements[element])
+    //            const de = domElements[element];
+    //            if (['player', 'id', 'color', 'type'].includes(element)) {
+    //                de.innerHTML = uById[element];
+    //            } else if (element === 'coords') {
+    //                de.innerHTML = uById.x + ' ' + uById.y;
+    //            } else if (
+    //                ['attack', 'range', 'armor', 'radar', 'cost'].includes(element)
+    //            ) {
+    //                de.innerHTML = uById.specs[element];
+    //            } else if (element === 'cargo') {
+    //                de.innerHTML = uById.canCargo
+    //                    ? uById.currentSpecs[element] + '/' + uById.specs[element]
+    //                    : 'Not capable';
+    //            } else {
+    //                de.innerHTML = uById.currentSpecs[element] + '/' + uById.specs[element];
+    //            }
+    //        }
+    //
+    //Other datas displaying
+    //dataContainer.innerHTML = '';
+    //Object.keys(selectedUnit).forEach((key) => {
+    //    const div = document.createElement('div');
+    //    div.innerHTML = `${key} : ${selectedUnit[key]}`;
+    //    dataContainer.appendChild(div);
+    //});
+    //} else {
+    //    for (const element in domElements) {
+    //        domElements[element].innerHTML = ' -- ';
+    //    }
+    //    dataContainer.innerHTML = 'Empty ! select a unit !!';
+    //}
 
     //victory conditions
     //const filteredPlayer1 = units.filter((unit) => unit.player === 1)

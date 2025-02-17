@@ -352,7 +352,7 @@ wsServer.on("request", request => {
                 const route = result.route
                 const gameId = result.gameId
                 const game = games[gameId]
-                const unit = units[unitId]
+                const unit = game.units[unitId]
 
                 unit.route = route
                 unit.moving = true
@@ -372,7 +372,7 @@ wsServer.on("request", request => {
             if (result.method === 'stop') {
                 const unit = result.unit
                 const game = games[result.gameId]
-                units[unit.id] = unit
+                game.units[unit.id] = unit
 
                 const payLoad = {
                     "method": "updateGame",
@@ -405,6 +405,7 @@ wsServer.on("request", request => {
                 const unit = result.unit
                 const gameId = result.gameId
                 const game = games[gameId]
+
                 if (unit.type !== 'scout') {
                     const maxMove = unit.specs.speed
                     const maxShots = unit.specs.shots
@@ -420,7 +421,7 @@ wsServer.on("request", request => {
                     // removing eventual moveAndFire
                     unit.moveAndFire = false
                 }
-                units[unit.id] = unit
+                game.units[unit.id] = unit
                 const payLoad = {
                     "method": "updateGame",
                     "from": result.method,
@@ -437,7 +438,7 @@ wsServer.on("request", request => {
                 const route = result.route
                 const gameId = result.gameId
                 const game = games[gameId]
-                const unit = units[unitId]
+                const unit = game.units[unitId]
                 const target = result.target
                 const targetId = result.targetId
 
@@ -467,6 +468,7 @@ wsServer.on("request", request => {
                 const target = result.target
                 const gameId = result.gameId
                 const game = games[gameId]
+                const units = game.units
 
                 if (units[target].currentSpecs.life <= 0) {
                     //unit on fire destroyed
@@ -548,6 +550,8 @@ wsServer.on("request", request => {
                 const target = result.target
                 const gameId = result.gameId
                 const game = games[gameId]
+                const units = game.units
+
                 if (units[target].currentSpecs.life <= 0) {
                     //unit on fire destroyed
                     console.log('EndFire case 1')
@@ -582,9 +586,11 @@ wsServer.on("request", request => {
             // destroying unit
             if (result.method === 'destroyUnit') {
                 const unitId = result.unitId
-                units[unitId] = null
                 const game = games[result.gameId]
+                game.units[unitId] = null
                 const wreck = result.wreck
+                const debris = game.debris
+
                 const dIndex = debris.findIndex((d) => d.x === wreck.x && d.y === wreck.y)
                 if (dIndex >= 0) {
                     debris[dIndex].qty += wreck.qty
@@ -608,6 +614,7 @@ wsServer.on("request", request => {
                 let agressor = result.agressors[0]
                 const target = result.target
                 const game = games[result.gameId]
+                const units = game.units
                 const destroyed = result.destroyed ? result.detroyed : false
 
                 // Agressor can fire
@@ -694,6 +701,7 @@ wsServer.on("request", request => {
                 const gameId = result.gameId;
                 const unitId = result.unitId
                 const game = games[gameId]
+                const units = game.units
                 units[unitId].currentSpecs.life = units[unitId].specs.life
                 const payLoad = {
                     "method": "updateGame",
@@ -710,6 +718,7 @@ wsServer.on("request", request => {
                 const gameId = result.gameId;
                 const unitId = result.unitId
                 const game = games[gameId]
+                const units = game.units
                 units[unitId].currentSpecs.ammo = units[unitId].specs.ammo
                 const payLoad = {
                     "method": "updateGame",
@@ -728,6 +737,7 @@ wsServer.on("request", request => {
                 const targetId = result.targetId
                 const qty = result.qty
                 const game = games[gameId]
+                const units = game.units
                 units[unitId].currentSpecs.cargo -= qty
                 units[targetId].currentSpecs.cargo += qty
                 const payLoad = {
@@ -744,8 +754,9 @@ wsServer.on("request", request => {
             if (result.method === 'produceUnit') {
                 const gameId = result.gameId
                 const build = result.build
-                const unit = units[result.unitId]
                 const game = games[result.gameId]
+                const units = game.units
+                const unit = units[result.unitId]
 
                 unit.producing = true
                 let newUnit = createUnit(build.unitType)
@@ -791,6 +802,7 @@ wsServer.on("request", request => {
             //deploying new unit
             if (result.method === 'deployNewUnit') {
                 const game = games[result.gameId]
+                const units = game.units
                 const unit = units[result.unitId]
                 const coords = result.coords
                 const newUnit = createUnit(unit.currentProd.unit, units, coords.x, coords.y, unit.player, unit.color, 0)
@@ -812,6 +824,7 @@ wsServer.on("request", request => {
             //scraping metal
             if (result.method === 'scrap') {
                 const game = games[result.gameId]
+                const units = game.units
                 const unit = units[result.unitId]
                 const toggle = result.toggle
 
@@ -836,6 +849,7 @@ wsServer.on("request", request => {
             //exploiting mine
             if (result.method === 'exploit') {
                 const game = games[result.gameId]
+                const units = game.units
                 const unit = units[result.unitId]
                 const toggle = result.toggle
 
@@ -861,6 +875,8 @@ wsServer.on("request", request => {
             if (result.method === 'endTurn') {
                 const clientId = result.clientId
                 let game = games[result.game.id]
+                const units = game.units
+                const debris = game.debris
                 // updating game
                 const client = game.clients.filter(client => client.clientId === clientId)
                 client[0].endedTurn = true

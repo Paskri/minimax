@@ -42,6 +42,7 @@ class CommonSpecs {
     this.canFire = false;
     this.canMode = false;
     this.canExploit = false;
+    this.canSentry = false;
     this.modes = [];
     this.activeModes = [];
     this.cargo = 0;
@@ -61,6 +62,7 @@ export class Tank extends CommonSpecs {
     this.color = color;
     this.angle = angle;
     this.canFire = true;
+    this.canSentry = true;
     this.modes = ['fire', 'sentry']
     this.activeModes = ['sentry']
 
@@ -101,6 +103,7 @@ export class Scout extends CommonSpecs {
     this.color = color;
     this.angle = angle;
     this.canFire = true;
+    this.canSentry = true;
     this.modes = ['fire', 'sentry']
     this.activeModes = ['sentry']
 
@@ -142,7 +145,8 @@ export class Gun extends CommonSpecs {
     this.angle = angle;
     this.canFire = true;
     this.canMode = true;
-    this.modes = ['fire', 'sentry']
+    this.canSentry = true;
+    this.modes = ['move', 'fire', 'sentry']
     this.activeModes = ['sentry']
 
     this.currentSpecs = {
@@ -220,6 +224,7 @@ export class Artillery extends CommonSpecs {
     this.angle = angle;
     this.canMode = true;
     this.canFire = true;
+    this.canSentry = true;
     this.modes = ['fire', 'sentry']
     this.activeModes = ['sentry']
 
@@ -262,8 +267,8 @@ export class Repair extends CommonSpecs {
     this.canRepair = true;
     this.canCargo = true;
     this.canMode = true;
-    this.modes = ['repair', 'transfer', 'scrap']
-    this.activeModes = ['repair']
+    this.modes = ['move', 'repair', 'transfer', 'scrap']
+    this.activeModes = ['move']
     this.canScrap = true
 
     this.currentSpecs = {
@@ -309,8 +314,8 @@ export class Supply extends CommonSpecs {
     this.canSupply = true;
     this.canCargo = true;
     this.canMode = true;
-    this.modes = ['supply', 'transfer', 'scrap'];
-    this.activeModes = ['supply'];
+    this.modes = ['move', 'supply', 'transfer', 'scrap'];
+    this.activeModes = ['move'];
     this.canScrap = true;
     this.scrapping = false
 
