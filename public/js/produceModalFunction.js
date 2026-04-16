@@ -98,7 +98,11 @@ function handleCancelClick() {
   }
   console.log('Sending : ', payLoad)
   productionState.ws.send(JSON.stringify(payLoad))
-  //server handling and updating game
+
+  // Updating current prod datas
+  const datas = { status: 'stopped', unit: '', speed: 0, turnsRemain: 0, cost: 0 }
+  productionState.selectedUnit.currentProd = datas
+  updateCurrentProduction()
 }
 
 function updateCurrentProduction() {

@@ -68,7 +68,7 @@ a:not([class]) {
 /* Make images easier to work with */
 img,
 picture {
-  max-width: 100%;
+  /* max-width: 100%; */
   display: block;
 }
 
@@ -98,8 +98,8 @@ textarea:not([rows]) {
   box-sizing: border-box;
 }
 canvas {
-  border: 10px inset #a89878;
-  border-radius: 10px;
+  /*border: 10px inset #a89878;
+  border-radius: 10px;*/
 }
 
 body {
@@ -110,6 +110,8 @@ body {
   width: 100%;
   padding: 10px;
   font-family: 'Arial Narrow Bold', sans-serif; /*'Haettenschweiler',*/
+  display: flex;
+  flex-direction: column;
 }
 
 #wrapper {
@@ -117,6 +119,8 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
+  flex-grow: 1;
+  z-index: 1;
 }
 #topbar {
   display: flex;
@@ -175,14 +179,14 @@ h1 {
 }
 #background {
   position: absolute;
-  left: 20px;
-  top: 20px;
+  /*left: 20px;
+  top: 20px;*/
   z-index: 0;
 }
 #chess {
   position: absolute;
-  left: 10px;
-  top: 10px;
+  /*left: 10px;
+  top: 10px;*/
   z-index: 1;
   background: transparent;
 }
@@ -191,6 +195,7 @@ h1 {
   flex-direction: column;
   align-items: start;
   justify-content: start;
+  margin-right: 10px;
 }
 .title-container {
   width: 200px;
@@ -211,16 +216,38 @@ h1 {
   border: 5px outset #665a42;
 }
 .canvas-container {
-  width: 1044px;
-  height: 890px;
-  flex: none;
-  margin-right: 15px;
+  position: relative;
+  /*width: 1020px;
+  height: 870px;
+  flex: none;*/
+  margin-right: 0;
+  overflow: hidden;
+  border: 10px inset #a89878;
+  border-radius: 10px;
+  flex-grow: 1;
+  align-self: stretch;
 }
 #grid {
   position: absolute;
-  left: 10px;
-  top: 10px;
+  /*left: 10px;
+  top: 10px;*/
   z-index: 10;
+}
+.coords-display {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  bottom: -10px;
+  left: calc(50% - 150px);
+  align-self: center;
+  z-index: 100;
+  border: 10px inset #a89878;
+  border-radius: 10px;
+  background: black;
+  color: white;
+  width: 300px;
+  height: 40px;
 }
 .btn {
   margin: 5px 0px 5px 0;

@@ -25,21 +25,6 @@
       </div>
     </div>
     <div id="wrapper">
-      <div class="canvas-container">
-        <img
-          id="background"
-          src="img/background.webp"
-          width="1000"
-          height="850"
-        />
-        <canvas id="chess" width="1000" height="850"></canvas>
-        <canvas id="grid" width="1000" height="850"></canvas>
-        <!--Unit modes - Off screen while not selected-->
-        <div id="mode-btn-container">
-          <button id="mode-btn">Mode 1</button>
-          <button id="mode-btn">Mode 2</button>
-        </div>
-      </div>
       <div id="right-bar">
         <div class="title-container">
           <h3>Filtres</h3>
@@ -71,10 +56,28 @@
           <div>Costs: <span id="cost"></span></div>
           <div>Cargo: <span id="cargo"></span></div>
         </div>
-        <div class="title-container">
+        <!--<div class="title-container">
           <h3>Other datas</h3>
         </div>
-        <div id="datas"></div>
+        <div id="datas"></div> !-->
+      </div>
+      <div class="canvas-container">
+        <img
+          id="background-img"
+          src="img/background.webp"
+          width="6000"
+          height="5100"
+          style="display: none"
+        />
+        <canvas id="background" width="1000" height="850"></canvas>
+        <canvas id="chess" width="1000" height="850"></canvas>
+        <canvas id="grid" width="1000" height="850"></canvas>
+        <div class="coords-display"></div>
+        <!--Unit modes - Off screen while not selected-->
+        <div id="mode-btn-container">
+          <button id="mode-btn">Mode 1</button>
+          <button id="mode-btn">Mode 2</button>
+        </div>
       </div>
     </div>
     <div id="units"></div>
@@ -247,6 +250,6 @@
         <button class="close-btn btn">Close</button>
       </div>
     </div>
-    <script type="module" src="/js/mainExp.js"></script>
+    <script type="module" src="/js/intermap.js"></script>
   </body>
 </html>

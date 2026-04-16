@@ -1333,19 +1333,6 @@ function draw() {
     })
 }
 
-//function loadImages(images, callback) {
-//    let loadedImages = 0
-//    let numImages = images.length
-//
-//    images.forEach((image) => {
-//        image.onload = () => {
-//            loadedImages++
-//            if (loadedImages === numImages) {
-//                callback()
-//            }
-//        }
-//    })
-//}
 
 setInterval(draw, 40)
-//loadImages([tank, scout, gun], draw);
+

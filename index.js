@@ -806,6 +806,7 @@ wsServer.on("request", request => {
                 });
 
             }
+
             //cancelling produce Unit
             if (result.method === 'cancelProduce') {
                 const unitId = result.unitId
@@ -824,6 +825,7 @@ wsServer.on("request", request => {
                     clients[c.clientId].connection.send(JSON.stringify(payLoad))
                 });
             }
+
             //deploying new unit
             if (result.method === 'deployNewUnit') {
                 const game = games[result.gameId]
