@@ -123,18 +123,18 @@ countDown.start()
 const images = generateImages();
 
 // ******************** WebSocket connection handling ***********************
-let ws = new WebSocket('ws://192.168.1.48:9090');
+let ws = new WebSocket(`ws://${window.location.hostname}:9090`);
 // getting connection params in local storage
 const localStorageClient = localStorage.getItem('clientId');
 let oldClientId = null;
-if (localStorageClient !== 'undefined' || localStorageClient !== null) {
+if (localStorageClient !== 'undefined' && localStorageClient !== null) {
     oldClientId = JSON.parse(localStorageClient);
 } else {
     oldClientId = null;
 }
 
 const localStorageGame = localStorage.getItem('game');
-if (localStorageGame !== 'undefined' || localStorageGame !== null) {
+if (localStorageGame !== 'undefined' && localStorageGame !== null) {
     game = JSON.parse(localStorageGame);
 } else {
     game = null;
